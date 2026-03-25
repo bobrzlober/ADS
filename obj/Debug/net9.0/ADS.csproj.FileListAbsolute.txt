@@ -1,0 +1,14 @@
+C:\ADS\obj\Debug\net9.0\ADS.GeneratedMSBuildEditorConfig.editorconfig
+C:\ADS\obj\Debug\net9.0\ADS.AssemblyInfoInputs.cache
+C:\ADS\obj\Debug\net9.0\ADS.AssemblyInfo.cs
+C:\ADS\obj\Debug\net9.0\ADS.csproj.CoreCompileInputs.cache
+C:\ADS\bin\Debug\net9.0\ADS.exe
+C:\ADS\bin\Debug\net9.0\ADS.deps.json
+C:\ADS\bin\Debug\net9.0\ADS.runtimeconfig.json
+C:\ADS\bin\Debug\net9.0\ADS.dll
+C:\ADS\bin\Debug\net9.0\ADS.pdb
+C:\ADS\obj\Debug\net9.0\ADS.dll
+C:\ADS\obj\Debug\net9.0\refint\ADS.dll
+C:\ADS\obj\Debug\net9.0\ADS.pdb
+C:\ADS\obj\Debug\net9.0\ADS.genruntimeconfig.cache
+C:\ADS\obj\Debug\net9.0\ref\ADS.dll
