@@ -34,6 +34,25 @@ class Program
             tail.Next = newNode;
             tail = newNode;
         }
-        Node current = tail;
+        Node left = head;
+        Node right = tail;
+        double result = 1;
+        while (left != right && left.Prev != right)
+        {
+            result *= (left.Value - right.Value);
+            left = left.Next.Next;
+            right = right.Prev.Prev;
+        }
+        Console.WriteLine($"result: {result}");
+        Node current = head;
+        while(current != null)
+        {
+            Node next = current.Next;
+            current.Next = null;
+            current.Prev = null;
+            current = next;
+        }
+        head = null;
+        tail = null;
     }
 }
