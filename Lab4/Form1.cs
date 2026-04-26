@@ -16,20 +16,22 @@ public partial class Form1 : Form
 
     public Form1()
     {
+        double k1 = 1 - N3 * 0.01 - N4 * 0.01 - 0.3; 
+        double k2 = 1 - N3 * 0.005 - N4 * 0.005 - 0.27; 
         InitializeComponent();
         this.Text = "Graph";
         this.Size = new Size(2560, 1440);
         this.Paint += OnPaint;
-        GenerateMatrices();
+        GenerateMatrices(k1);
         PrintVertexDegrees();
         CheckForRegular();
         CheckForSpecialVertices();
+        GenerateMatrices(k2);
     }
 
-    void GenerateMatrices()
+    void GenerateMatrices(double k)
     {
         var rng = new Random(SEED);
-        double k = 1.0 - N3 * 0.01 - N4 * 0.01 - 0.3;
 
         dirMatrix = new int[N, N];
         undirMatrix = new int[N, N];
@@ -157,23 +159,54 @@ public partial class Form1 : Form
             {
                 Console.WriteLine($"Vertice {i+1} is isolated");
                 found = true;
-            } else if (currentVertice == 1)
+            } 
+            else if (currentVertice == 1)
             {
                 Console.WriteLine($"Vertice {i+1} is hanging");
                 found = true;
             }
-            if (!found)
-            {
-                Console.WriteLine("No Hanging or Isolated vortices found;");
-            }
-
-        } 
+        }
+        if (!found)
+        {
+            Console.WriteLine("No Hanging or Isolated vortices found");
+        }  
         Console.WriteLine("DirMatrix:");
-        for (int k = 0; k < N; k++)
+        found = false;
+
+        for (int i = 0; i < N; i++)
         {
             int currentInVertice = 0;
             int currentOutVertice = 0;
+            for (int j = 0; j < N; j++)
+            {
+                currentInVertice += dirMatrix[j,i];
+                currentOutVertice += dirMatrix[i,j];
+            }
+            if(currentInVertice == 0)
+            {
+                Console.WriteLine($"InVertice {i+1} is isolated");
+                found = true;
+            }
+            else if(currentInVertice == 1)
+            {
+                Console.WriteLine($"InVertice {i+1} is hanging");
+                found = true;
+            }
+            else if(currentOutVertice == 0)
+            {
+                Console.WriteLine($"OutVertice {i+1} is isolated");
+                found = true;
+            }
+            else if(currentOutVertice == 1)
+            {
+                Console.WriteLine($"OutVertice {i+1} is hanging");
+                found = true;
+            }
         }
+        if (!found)
+        {
+            Console.WriteLine("No Hanging or Isolated vortices found");
+        }  
 
     }
     void OnPaint(object sender, PaintEventArgs e)
