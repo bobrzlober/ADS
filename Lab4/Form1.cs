@@ -27,8 +27,12 @@ public partial class Form1 : Form
         CheckForRegular();
         CheckForSpecialVertices();
         GenerateMatrices(k2);
-    }
+        PrintVertexDegrees();
+        FindPath();
+        FindReachabilty();
+        StrongConnectivity();
 
+    }
     void GenerateMatrices(double k)
     {
         var rng = new Random(SEED);
@@ -207,6 +211,156 @@ public partial class Form1 : Form
         {
             Console.WriteLine("No Hanging or Isolated vortices found");
         }  
+
+    }
+    void FindPath()
+    {
+        var lines = new List<string>();
+
+        lines.Add("All Paths of length(2) :");
+        for(int i = 0; i < N; i++)
+        {
+           for(int j = 0; j < N; j++)
+            {
+                for(int k = 0; k < N; k++)
+                {
+                    if(dirMatrix[i,k] == 1 && dirMatrix[k,j] == 1)
+                    {
+                        lines.Add($"{i+1} -> {k+1} -> {j+1}");
+                    }
+                }
+            } 
+        }
+        lines.Add("All Paths of length(3) :");
+        for(int i = 0; i < N; i++)
+        {
+           for(int j = 0; j < N; j++)
+            {
+                for(int k = 0; k < N; k++)
+                {
+                    for(int l = 0; l < N; l++)
+                    {
+                        if(dirMatrix[i,k] == 1 && dirMatrix[k,j] == 1)
+                        {
+                            lines.Add($"{i+1} -> {k+1} -> {l+1} -> {j+1}");
+                        }
+                    }
+                }
+            } 
+        }
+        File.WriteAllLines("paths.txt", lines);
+        Console.WriteLine("Paths saved to path.txt");
+    }
+    int[,] MultiplyMatrix(int[,] A)
+    {
+        int[,] result = new int[N,N];
+        for (int i = 0; i < N; i++)
+        {
+            for(int j = 0; j < N; j++)
+            {
+                for(int k = 0; k < N; k++)
+                {
+                    result[i,j] += A[i,k] * A[k,j];  
+                }
+            }
+        }
+        return result;
+    }
+    int[,] FindReachabilty()
+    {
+        int[,] result = new int [N,N];
+        int[,] current = dirMatrix;
+        for (int k = 0; k < N; k++)
+        {
+            for (int i = 0; i < N; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    result[i,j] += current[i,j];
+                }
+            }
+            current = MultiplyMatrix(current);
+        }
+        for (int i = 0; i < N; i++)
+        {
+            for (int j = 0; j < N; j++)
+            {
+                result[i,j] = result[i,j] > 0 ? 1 : 0;
+            }
+        }
+        Console.WriteLine("\nReachability Matrix:");
+        for(int i = 0; i < N; i++)
+        {
+            for(int j = 0; j < N; j++)
+            {
+                Console.Write(result[i,j] + " ");
+            }
+            Console.WriteLine();
+        }
+        return result;
+
+    }
+    int[,] FindStrongConnectivity(int[,] A)
+    {
+        int[,] result = new int[N,N];
+        for(int i = 0; i < N; i++)
+        {
+            for(int j = 0; j < N; j++)
+            {
+                if(A[i,j] == 1 && A[j,i] == 1)
+                {
+                    result[i,j] = 1;
+                }
+            }
+        }
+        return result;
+    }
+    void StrongConnectivity()
+    {
+        var reachability = FindReachabilty();
+        var strongConnectivity = FindStrongConnectivity(reachability);
+        
+        Console.WriteLine("\nStrong Connectivity Matrix: ");
+        for (int i = 0; i < N; i++)
+        {
+            for (int j = 0; j < N; j++)
+            {
+                Console.Write(strongConnectivity[i,j] + " ");
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine("Components: ");
+        FindComponents(strongConnectivity);
+    }
+    void FindComponents(int [,] S)
+    {
+        bool[] visited = new bool[N];
+        int componentNum = 1;
+        for(int i = 0; i < N; i++)
+        {
+            if (!visited[i])
+            {
+                var members = new List<int>();
+                for (int j = 0; j < N; j++)
+                {
+                    if(S[i,j] == 1)
+                    {
+                        members.Add(j+1);
+                        visited[j] = true;
+                    }
+                }
+                if (members.Count > 0)
+                {
+                    Console.WriteLine($"Component {componentNum} : {{");
+                    foreach(var m in members)
+                    {
+                        Console.Write($" {m}");
+                    }
+                    Console.WriteLine(" }");
+                    componentNum++;
+                }
+            }
+        }
 
     }
     void OnPaint(object sender, PaintEventArgs e)
