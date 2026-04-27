@@ -11,8 +11,16 @@ public partial class Form1 : Form
 
     int[,] dirMatrix;
     int[,] undirMatrix;
+    int[,] dirMatrix1;
+    int[,] undirMatrix1;
+    int[,] dirMatrix2;
+    int[,] undirMatrix2;
     int[] coordX = [200, 400, 600, 800, 800, 800, 600, 400, 200, 200];
     int[] coordY = [200, 200, 200, 200, 400, 600, 600, 600, 600, 400];
+    int[] ccordX = [600, 800, 600, 800];
+    int[] ccordY = [200, 200, 400, 400];
+    List<List<int>> strongComponents;
+    int[,] condensationMatrix;
     
 
     public Form1()
@@ -24,10 +32,14 @@ public partial class Form1 : Form
         this.Size = new Size(2560, 1440);
         this.Paint += OnPaint;
         GenerateMatrices(k1);
+        dirMatrix1 = dirMatrix;
+        undirMatrix1 = undirMatrix;
         PrintVertexDegrees();
         CheckForRegular();
         CheckForSpecialVertices();
         GenerateMatrices(k2);
+        dirMatrix2 = dirMatrix;
+        undirMatrix2 = undirMatrix;
         PrintVertexDegrees();
         FindPath();
         FindReachabilty();
@@ -329,25 +341,25 @@ public partial class Form1 : Form
                 Console.Write(strongConnectivity[i,j] + " ");
             }
             Console.WriteLine();
-        }
-        var components = FindComponents(strongConnectivity);
+        }       
+        strongComponents = FindComponents(strongConnectivity);
+        condensationMatrix = BuildCondensationMatrix(strongComponents);        
         Console.WriteLine("Components:");
-        for (int i = 0; i < components.Count; i++)
+        for (int i = 0; i < strongComponents.Count; i++)
         {
             Console.Write($"Component {i+1} : {{");
-            foreach(var j in components[i])
+            foreach(var j in strongComponents[i])
             {
                 Console.Write($" {j}");
             }
-            Console.WriteLine("}");
+            Console.WriteLine(" }");
         }
-        var condensation = BuildCondensationMatrix(components);
         Console.WriteLine("\n CondensationMatrix: ");
-        for (int i = 0; i < components.Count; i++)
+        for (int i = 0; i < strongComponents.Count; i++)
         {
-            for (int j = 0; j < components.Count; j++)
+            for (int j = 0; j < strongComponents.Count; j++)
             {
-                Console.Write(condensation[i,j] + " ");
+                Console.Write(condensationMatrix[i,j] + " ");
             }
             Console.WriteLine();
         }
@@ -401,48 +413,116 @@ public partial class Form1 : Form
         }
         return condensation;
     }
-    void OnPaint(object sender, PaintEventArgs e)
+    void DrawUndirGraph(Graphics g, int[,] matrix, int offsetX, int offsetY)
     {
-        var g = e.Graphics;
         int r = 20;
-        int offsetX = 1000;
-        int loopSize = 40;
         for (int i = 0; i < N; i++)
         {
-            for (int j = i + 1; j < N; j++)
-                if (undirMatrix[i, j] == 1)
-                    g.DrawLine(Pens.Black, coordX[i], coordY[i], coordX[j], coordY[j]);
-            g.FillEllipse(Brushes.White, coordX[i] - r, coordY[i] - r, r * 2, r * 2);
-            g.DrawEllipse(Pens.Black, coordX[i] - r, coordY[i] - r, r * 2, r * 2);
-            g.DrawString((i + 1).ToString(), this.Font, Brushes.Black, coordX[i] - 5, coordY[i] - 7);
-        }
-        for (int i = 0; i < N; i++)
-        {
-            if (dirMatrix[i, i] == 1)
+            for (int j = 0; j < N; j++)
             {
-                int x = coordX[i] + offsetX;
-                int y = coordY[i];
-                int lx = x - loopSize / 2;
-                int ly = y - loopSize / 2;
-                if (coordY[i] == 200) ly -= r;
-                else if (coordY[i] == 600) ly += r;
-                else if (coordX[i] == 800) lx += r;
-                else if (coordX[i] == 200) lx -= r;
-
-                g.DrawEllipse(Pens.Black, lx, ly, loopSize, loopSize);
+                if (matrix[i,j] == 1)
+                {
+                    g.DrawLine(Pens.Black, coordX[i] + offsetX, coordY[i] + offsetY, coordX[j] + offsetX, coordY[j] + offsetY);
+                }
             }
+        }
+        for(int i = 0; i < N; i++)
+        {
+            g.FillEllipse(Brushes.White, coordX[i] + offsetX - r, coordY[i] + offsetY - r, r * 2, r * 2);
+            g.DrawEllipse(Pens.Black, coordX[i] + offsetX - r, coordY[i] + offsetY - r, r * 2, r * 2);
+            g.DrawString((i + 1).ToString(), this.Font, Brushes.Black, coordX[i] + offsetX - 5, coordY[i] + offsetY - 7);
+        }
+    }
+    void DrawDirGraph(Graphics g, int[,] matrix, int offsetX, int offsetY)
+    {
+        int r = 20;
+        int loopSize = 40;
+        int bend = 50;
+        for ( int i = 0; i < N; i++)
+        {
+            int lx = coordX[i] + offsetX - loopSize / 2;
+            int ly = coordY[i] + offsetY - loopSize / 2;
+            if( matrix[i,i] == 1)
+            {
+                if(coordY[i] == 200)
+                {
+                    ly -=20;
+                } else if(coordY[i] == 600)
+                {
+                    ly +=20;
+                }else if(coordX[i] == 800)
+                {
+                    lx +=20;
+                }else if(coordX[i] == 200)
+                {
+                    lx -=20;
+                }
+                g.DrawEllipse(Pens.Black, lx, ly, loopSize, loopSize);
+                
+            }
+            
         }
         for (int i = 0; i < N; i++)
         {
             for (int j = 0; j < N; j++)
             {
-                if (i != j && dirMatrix[i, j] == 1)
+                if (i != j && matrix[i, j] == 1)
                 {
                     double angle = Math.Atan2(coordY[j] - coordY[i], coordX[j] - coordX[i]);
                     int startX = coordX[i] + offsetX + (int)(r * Math.Cos(angle));
-                    int startY = coordY[i] + (int)(r * Math.Sin(angle));
+                    int startY = coordY[i] + offsetY + (int)(r * Math.Sin(angle));
                     int endX = coordX[j] + offsetX - (int)(r * Math.Cos(angle));
-                    int endY = coordY[j] - (int)(r * Math.Sin(angle));
+                    int endY = coordY[j] + offsetY - (int)(r * Math.Sin(angle));
+                    int cx = (startX + endX) / 2 + (int)(bend * Math.Sin(angle));
+                    int cy = (startY + endY) / 2 + (int)(bend * Math.Cos(angle));
+                    g.DrawBezier(Pens.Black, startX, startY, cx, cy, cx, cy, endX, endY);
+                    double endAngle = Math.Atan2(endY - cy, endX - cx);
+                    int arrowLen = 12;
+                    g.DrawLine(Pens.Black, endX, endY, (int)(endX - arrowLen * Math.Cos(endAngle - 0.4)), (int)(endY - arrowLen * Math.Sin(endAngle - 0.4)));
+                    g.DrawLine(Pens.Black, endX, endY, (int)(endX - arrowLen * Math.Cos(endAngle + 0.4)), (int)(endY - arrowLen * Math.Sin(endAngle + 0.4)));
+                }
+            }
+        }
+        for (int i = 0; i < N; i++)
+        {
+            g.FillEllipse(Brushes.White, coordX[i] + offsetX - r, coordY[i] + offsetY - r, r * 2, r * 2);
+            g.DrawEllipse(Pens.Black, coordX[i] + offsetX - r, coordY[i] + offsetY - r, r * 2, r * 2);
+            g.DrawString((i + 1).ToString(), this.Font, Brushes.Black, coordX[i] + offsetX - 5, coordY[i] + offsetY - 7); 
+        }
+    }
+    void DrawCondensationGraph(Graphics g, int[,] matrix, int offsetX, int offsetY)
+    {
+        int r = 40;
+        int loopSize = 40;
+        for ( int i = 0; i < strongComponents.Count; i++)
+        {
+            int lx = ccordX[i] + offsetX - loopSize / 2;
+            int ly = ccordY[i] + offsetY - loopSize / 2;
+            if( matrix[i,i] == 1)
+            {
+                if(ccordY[i] == 100)
+                {
+                    ly -=20;
+                } else if(ccordY[i] == 300)
+                {
+                    ly +=20;
+                }
+                g.DrawEllipse(Pens.Black, lx, ly, loopSize, loopSize);
+                
+            }
+            
+        }
+        for (int i = 0; i < strongComponents.Count; i++)
+        {
+            for (int j = 0; j < strongComponents.Count; j++)
+            {
+                if (i != j && matrix[i, j] == 1)
+                {
+                    double angle = Math.Atan2(ccordY[j] - ccordY[i], ccordX[j] - ccordX[i]);
+                    int startX = ccordX[i] + offsetX + (int)(r * Math.Cos(angle));
+                    int startY = ccordY[i] + offsetY + (int)(r * Math.Sin(angle));
+                    int endX = ccordX[j] + offsetX - (int)(r * Math.Cos(angle));
+                    int endY = ccordY[j] + offsetY - (int)(r * Math.Sin(angle));
                     g.DrawLine(Pens.Black, startX, startY, endX, endY);
                     int arrowLen = 12;
                     g.DrawLine(Pens.Black, endX, endY, (int)(endX - arrowLen * Math.Cos(angle - 0.4)), (int)(endY - arrowLen * Math.Sin(angle - 0.4)));
@@ -450,17 +530,25 @@ public partial class Form1 : Form
                 }
             }
         }
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < strongComponents.Count; i++)
         {
-            int x = coordX[i] + offsetX;
-            int y = coordY[i];
-            
-            g.FillEllipse(Brushes.White, x - r, y - r, r * 2, r * 2);
-            g.DrawEllipse(Pens.Black, x - r, y - r, r * 2, r * 2);
-            g.DrawString((i + 1).ToString(), this.Font, Brushes.Black, x - 5, y - 7);
+            g.FillEllipse(Brushes.White, ccordX[i] + offsetX - r, ccordY[i] + offsetY - r, r * 2, r * 2);
+            g.DrawEllipse(Pens.Black, ccordX[i] + offsetX - r, ccordY[i] + offsetY - r, r * 2, r * 2);
+            string label = "{" + string.Join(",", strongComponents[i]) + "}";
+            g.DrawString(label, this.Font, Brushes.Black, ccordX[i] + offsetX - 30, ccordY[i] + offsetY - 30); 
         }
-        g.DrawString("Undir graph", this.Font, Brushes.Black, 400, 650);
-        g.DrawString("Dir graph", this.Font, Brushes.Black, 1400, 650);
-        g.DrawString("A self-loop starting and ending at the same node indicates that the object is directed at itself", this.Font, Brushes.Black, 1000, 700);
     }
+    void OnPaint(object sender, PaintEventArgs e)
+    {
+        var g = e.Graphics;
+        DrawUndirGraph(g, undirMatrix1, 0, 0);
+        DrawDirGraph(g, dirMatrix1, 1000, 0);
+        DrawDirGraph(g, dirMatrix2, 0, 650);
+        DrawCondensationGraph(g, condensationMatrix, 1000, 750);
+
+        g.DrawString("First Undir Graph", this.Font, Brushes.Black, 300, 670);
+        g.DrawString("First Dir Graph", this.Font, Brushes.Black, 1300, 670);
+        g.DrawString("Second Dir Graph", this.Font, Brushes.Black, 300, 750);
+        g.DrawString("Condensation Graph", this.Font, Brushes.Black, 1300, 1050);
+    }     
 }
