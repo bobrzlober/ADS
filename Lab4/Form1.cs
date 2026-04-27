@@ -13,6 +13,7 @@ public partial class Form1 : Form
     int[,] undirMatrix;
     int[] coordX = [200, 400, 600, 800, 800, 800, 600, 400, 200, 200];
     int[] coordY = [200, 200, 200, 200, 400, 600, 600, 600, 600, 400];
+    
 
     public Form1()
     {
@@ -329,39 +330,76 @@ public partial class Form1 : Form
             }
             Console.WriteLine();
         }
-        Console.WriteLine("Components: ");
-        FindComponents(strongConnectivity);
+        var components = FindComponents(strongConnectivity);
+        Console.WriteLine("Components:");
+        for (int i = 0; i < components.Count; i++)
+        {
+            Console.Write($"Component {i+1} : {{");
+            foreach(var j in components[i])
+            {
+                Console.Write($" {j}");
+            }
+            Console.WriteLine("}");
+        }
+        var condensation = BuildCondensationMatrix(components);
+        Console.WriteLine("\n CondensationMatrix: ");
+        for (int i = 0; i < components.Count; i++)
+        {
+            for (int j = 0; j < components.Count; j++)
+            {
+                Console.Write(condensation[i,j] + " ");
+            }
+            Console.WriteLine();
+        }
     }
-    void FindComponents(int [,] S)
+    List<List<int>> FindComponents(int [,] S)
     {
+        var components = new List<List<int>>();
         bool[] visited = new bool[N];
-        int componentNum = 1;
         for(int i = 0; i < N; i++)
         {
             if (!visited[i])
             {
+                visited[i] = true;
                 var members = new List<int>();
+                members.Add(i + 1);
                 for (int j = 0; j < N; j++)
                 {
-                    if(S[i,j] == 1)
+                    if(S[i,j] == 1 && !visited[j])
                     {
                         members.Add(j+1);
                         visited[j] = true;
                     }
                 }
-                if (members.Count > 0)
+                components.Add(members);
+            }
+        }
+        return components;
+    }
+    int[,] BuildCondensationMatrix(List<List<int>> components)
+    {
+        int k = components.Count;
+        int[,] condensation = new int[k, k];
+        for (int i = 0; i < k; i++)
+        {
+            for(int j = 0; j < k; j++)
+            {
+                if (i != j)
                 {
-                    Console.WriteLine($"Component {componentNum} : {{");
-                    foreach(var m in members)
+                    foreach (var l in components[i])
                     {
-                        Console.Write($" {m}");
+                        foreach (var m in components[j])
+                        {
+                            if(dirMatrix[l-1, m-1] == 1)
+                            {
+                                condensation[i,j] = 1;
+                            }
+                        }
                     }
-                    Console.WriteLine(" }");
-                    componentNum++;
                 }
             }
         }
-
+        return condensation;
     }
     void OnPaint(object sender, PaintEventArgs e)
     {
